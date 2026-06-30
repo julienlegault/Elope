@@ -218,26 +218,21 @@
      *  Images are renumbered 1..N for each password group so
      *  viewers cannot tell they are seeing a subset.
      *
-     *  To generate a SHA-256 hash on the command line:
+     *  To generate a SHA-256 hash for a new password:
      *    echo -n "yourpassword" | sha256sum
-     *
-     *  Example passwords and their pre-computed hashes:
-     *   "elope2024"   → 98ffbe3573c25e9f85a5902a32b832a9f27b5956d3b269de0bcfca42beaef584
-     *   "friends2024" → e89f89e4cb2193d865793f7dd2879484e2e0343d427a5e8c0292a88141a2d760
-     *   "family2024"  → 071c00fa66449df33ffca0f3b71da9f9375eaf8feef471f348c9bac19e6f4914
      * ════════════════════════════════════════════════════════════
      */
     const PASSWORD_CONFIG = {
-      // "elope2024" – full gallery
+      // password 1 – full gallery
       "98ffbe3573c25e9f85a5902a32b832a9f27b5956d3b269de0bcfca42beaef584": [
         "photo01.jpg", "photo02.jpg", "photo03.jpg", "photo04.jpg", "photo05.jpg",
         "photo06.jpg", "photo07.jpg", "photo08.jpg", "photo09.jpg", "photo10.jpg"
       ],
-      // "friends2024" – selected subset
+      // password 2 – selected subset
       "e89f89e4cb2193d865793f7dd2879484e2e0343d427a5e8c0292a88141a2d760": [
         "photo01.jpg", "photo02.jpg", "photo04.jpg", "photo06.jpg", "photo08.jpg"
       ],
-      // "family2024" – different subset
+      // password 3 – different subset
       "071c00fa66449df33ffca0f3b71da9f9375eaf8feef471f348c9bac19e6f4914": [
         "photo02.jpg", "photo03.jpg", "photo05.jpg", "photo07.jpg", "photo09.jpg", "photo10.jpg"
       ]
@@ -264,7 +259,7 @@
       const raw  = document.getElementById("password-input").value;
       const hash = await sha256(raw);
 
-      if (Object.prototype.hasOwnProperty.call(PASSWORD_CONFIG, hash)) {
+      if (Object.hasOwn(PASSWORD_CONFIG, hash)) {
         currentImages = PASSWORD_CONFIG[hash];
         document.getElementById("password-modal").style.display = "none";
         document.getElementById("viewer").removeAttribute("hidden");
@@ -328,7 +323,8 @@
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(a.href);
-      } catch (_) {
+      } catch (err) {
+        console.error("Download failed, opening in new tab:", err);
         window.open(url, "_blank");
       }
     });
