@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elope</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #000;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    /* ── Password Modal ── */
+    #password-modal {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      z-index: 200;
+    }
+
+    #password-box {
+      text-align: center;
+      color: #fff;
+      padding: 2.5rem;
+    }
+
+    #password-box h2 {
+      font-size: 1.4rem;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 1.8rem;
+    }
+
+    #password-input {
+      display: block;
+      width: 220px;
+      margin: 0 auto 0.9rem;
+      padding: 0.55rem 0.9rem;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 4px;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    #password-input:focus {
+      border-color: rgba(255, 255, 255, 0.75);
+    }
+
+    #submit-password {
+      display: block;
+      width: 220px;
+      margin: 0 auto;
+      padding: 0.55rem 0.9rem;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 4px;
+      color: #fff;
+      font-size: 0.95rem;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.2s;
+    }
+
+    #submit-password:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    #password-error {
+      margin-top: 1rem;
+      color: rgba(255, 100, 100, 0.9);
+      font-size: 0.85rem;
+      letter-spacing: 0.03em;
+    }
+
+    /* ── Viewer ── */
+    #viewer {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #current-image {
+      max-width: 100vw;
+      max-height: 100vh;
+      object-fit: contain;
+      user-select: none;
+      /* leave space for the bottom bar */
+      padding-bottom: 44px;
+    }
+
+    /* ── Bottom navigation bar ── */
+    #bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 10px;
+      background: rgba(0, 0, 0, 0.30);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    }
+
+    #bottom-bar::-webkit-scrollbar {
+      height: 3px;
+    }
+
+    #bottom-bar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+    }
+
+    .img-num-btn {
+      flex-shrink: 0;
+      min-width: 30px;
+      height: 26px;
+      padding: 0 5px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 3px;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .img-num-btn:hover {
+      background: rgba(255, 255, 255, 0.20);
+      color: #fff;
+    }
+
+    .img-num-btn.active {
+      background: rgba(255, 255, 255, 0.35);
+      border-color: rgba(255, 255, 255, 0.55);
+      color: #fff;
+    }
+
+    #download-btn {
+      flex-shrink: 0;
+      margin-left: auto;
+      height: 26px;
+      padding: 0 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.20);
+      border-radius: 3px;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 0.75rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    #download-btn:hover {
+      background: rgba(255, 255, 255, 0.20);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Password Modal ── -->
+  <div id="password-modal">
+    <div id="password-box">
+      <h2>View Photos</h2>
+      <input
+        type="password"
+        id="password-input"
+        placeholder="Password"
+        autocomplete="current-password"
+        spellcheck="false"
+      >
+      <button id="submit-password">Continue</button>
+      <p id="password-error" hidden>Incorrect password. Please try again.</p>
+    </div>
+  </div>
+
+  <!-- ── Image Viewer (shown after successful login) ── -->
+  <div id="viewer" hidden>
+    <img id="current-image" src="" alt="Photo">
+    <div id="bottom-bar">
+      <div id="image-numbers" role="list" aria-label="Image navigation" style="display:contents;"></div>
+      <button id="download-btn" aria-label="Download current image">&#8681; Download</button>
+    </div>
+  </div>
+
+  <script>
+    /*
+     * ════════════════════════════════════════════════════════════
+     *  PASSWORD CONFIGURATION
+     *
+     *  Each key is the SHA-256 hex-digest of a password.
+     *  The value is the ordered list of filenames from the
+     *  "images/" directory shown to that password's viewers.
+     *
+     *  Images are renumbered 1..N for each password group so
+     *  viewers cannot tell they are seeing a subset.
+     *
+     *  To generate a SHA-256 hash on the command line:
+     *    echo -n "yourpassword" | sha256sum
+     *
+     *  Example passwords and their pre-computed hashes:
+     *   "elope2024"   → 98ffbe3573c25e9f85a5902a32b832a9f27b5956d3b269de0bcfca42beaef584
+     *   "friends2024" → e89f89e4cb2193d865793f7dd2879484e2e0343d427a5e8c0292a88141a2d760
+     *   "family2024"  → 071c00fa66449df33ffca0f3b71da9f9375eaf8feef471f348c9bac19e6f4914
+     * ════════════════════════════════════════════════════════════
+     */
+    const PASSWORD_CONFIG = {
+      // "elope2024" – full gallery
+      "98ffbe3573c25e9f85a5902a32b832a9f27b5956d3b269de0bcfca42beaef584": [
+        "photo01.jpg", "photo02.jpg", "photo03.jpg", "photo04.jpg", "photo05.jpg",
+        "photo06.jpg", "photo07.jpg", "photo08.jpg", "photo09.jpg", "photo10.jpg"
+      ],
+      // "friends2024" – selected subset
+      "e89f89e4cb2193d865793f7dd2879484e2e0343d427a5e8c0292a88141a2d760": [
+        "photo01.jpg", "photo02.jpg", "photo04.jpg", "photo06.jpg", "photo08.jpg"
+      ],
+      // "family2024" – different subset
+      "071c00fa66449df33ffca0f3b71da9f9375eaf8feef471f348c9bac19e6f4914": [
+        "photo02.jpg", "photo03.jpg", "photo05.jpg", "photo07.jpg", "photo09.jpg", "photo10.jpg"
+      ]
+    };
+
+    const IMAGES_DIR = "images/";
+
+    let currentImages = [];
+    let currentIndex  = 0;
+
+    /* ── Utilities ── */
+
+    async function sha256(message) {
+      const data   = new TextEncoder().encode(message);
+      const buffer = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(buffer))
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+    }
+
+    /* ── Password handling ── */
+
+    async function handlePasswordSubmit() {
+      const raw  = document.getElementById("password-input").value;
+      const hash = await sha256(raw);
+
+      if (Object.prototype.hasOwnProperty.call(PASSWORD_CONFIG, hash)) {
+        currentImages = PASSWORD_CONFIG[hash];
+        document.getElementById("password-modal").style.display = "none";
+        document.getElementById("viewer").removeAttribute("hidden");
+        buildNavigation();
+        showImage(0);
+      } else {
+        const errEl = document.getElementById("password-error");
+        errEl.removeAttribute("hidden");
+        document.getElementById("password-input").value = "";
+        document.getElementById("password-input").focus();
+      }
+    }
+
+    /* ── Navigation ── */
+
+    function buildNavigation() {
+      const container = document.getElementById("image-numbers");
+      container.innerHTML = "";
+      currentImages.forEach(function(_, i) {
+        const btn = document.createElement("button");
+        btn.className       = "img-num-btn";
+        btn.textContent     = i + 1;
+        btn.setAttribute("role", "listitem");
+        btn.setAttribute("aria-label", "Go to photo " + (i + 1));
+        btn.addEventListener("click", function() { showImage(i); });
+        container.appendChild(btn);
+      });
+    }
+
+    function showImage(index) {
+      if (index < 0 || index >= currentImages.length) return;
+      currentIndex = index;
+
+      const img = document.getElementById("current-image");
+      img.src = IMAGES_DIR + currentImages[index];
+      img.alt = "Photo " + (index + 1) + " of " + currentImages.length;
+
+      document.querySelectorAll(".img-num-btn").forEach(function(btn, i) {
+        btn.classList.toggle("active", i === index);
+      });
+
+      const activeBtn = document.querySelectorAll(".img-num-btn")[index];
+      if (activeBtn) {
+        activeBtn.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+      }
+    }
+
+    /* ── Download ── */
+
+    document.getElementById("download-btn").addEventListener("click", async function() {
+      if (!currentImages.length) return;
+      const url      = IMAGES_DIR + currentImages[currentIndex];
+      const filename = currentImages[currentIndex];
+      try {
+        const response = await fetch(url);
+        const blob     = await response.blob();
+        const a        = document.createElement("a");
+        a.href         = URL.createObjectURL(blob);
+        a.download     = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+      } catch (_) {
+        window.open(url, "_blank");
+      }
+    });
+
+    /* ── Keyboard navigation ── */
+
+    document.addEventListener("keydown", function(e) {
+      if (document.getElementById("viewer").hasAttribute("hidden")) return;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown")  showImage(currentIndex + 1);
+      if (e.key === "ArrowLeft"  || e.key === "ArrowUp")    showImage(currentIndex - 1);
+    });
+
+    /* ── Init ── */
+
+    document.getElementById("submit-password").addEventListener("click", handlePasswordSubmit);
+    document.getElementById("password-input").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") handlePasswordSubmit();
+    });
+
+    window.addEventListener("load", function() {
+      document.getElementById("password-input").focus();
+    });
+  </script>
+
+</body>
+</html>
